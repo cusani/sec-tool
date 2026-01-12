@@ -1,36 +1,49 @@
 // app/filings/[ticker]/page.js
+import { getSecFilings } from "../../../lib/secUtils"; // 경로 주의 (상대경로)
 
-export default async function FilingPage({ params }) {
-  // URL에서 ticker 값(예: AAPL)을 가져옵니다.
-  // Next.js 15부터는 params가 Promise이므로 await가 필요할 수 있습니다.
+// 1. 메타데이터 생성 부분
+export async function generateMetadata({ params }) {
+  // Next.js 15 대응: params를 await 해야 함
+  const resolvedParams = await params;
+  const ticker = resolvedParams.ticker; // 폴더명이 [ticker]니까 여기서도 ticker로 받아야 함
+
+  const data = await getSecFilings(ticker);
+  const title = data
+    ? `${data.companyName} (${ticker}) 공시`
+    : `${ticker} 공시`;
+
+  return {
+    title: title,
+    description: `${ticker}의 최신 SEC 공시 자료`,
+  };
+}
+
+// 2. 페이지 컴포넌트
+export default async function Page({ params }) {
   const resolvedParams = await params;
   const ticker = resolvedParams.ticker;
+  const data = await getSecFilings(ticker);
+
+  if (!data) return <div>데이터 없음</div>;
+
+  const { companyName, filings } = data;
+
+  // [수정 포인트] 회사 이름에서 (티커) 부분 제거하기
+  // 예: "Apple Inc. (AAPL)" -> "Apple Inc."
+  const cleanCompanyName = companyName.replace(/\s*\([A-Z]+\)$/, "");
 
   return (
-    <div style={{ padding: "40px", fontFamily: "sans-serif" }}>
-      <h1 style={{ fontSize: "2rem", fontWeight: "bold" }}>
-        📈 {ticker.toUpperCase()} 공시 정보
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">
+        {cleanCompanyName} ({ticker})
       </h1>
-      <p style={{ marginTop: "20px", color: "#666" }}>
-        여기는 <strong>{ticker.toUpperCase()}</strong>의 SEC 리포트가 표시될
-        자리입니다.
-      </p>
-
-      <div
-        style={{
-          marginTop: "40px",
-          padding: "20px",
-          background: "#f5f5f5",
-          borderRadius: "8px",
-        }}
-      >
-        <h3>🚀 개발자 노트</h3>
-        <p>이 페이지는 정적 페이지가 아닙니다.</p>
-        <p>
-          URL 뒤에 무엇을 입력하든 (/filings/SAMSUNG, /filings/GOOGLE) 자동으로
-          생성됩니다.
-        </p>
-      </div>
+      <ul>
+        {filings.map((doc) => (
+          <li key={doc._id} className="border-b p-2">
+            {doc._source.form} - {doc._source.file_date}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
