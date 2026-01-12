@@ -3,7 +3,7 @@ const tickers = ["AAPL", "TSLA", "MSFT", "NVDA", "GOOGL", "AMZN", "META"];
 
 export default async function sitemap() {
   const routes = tickers.map((ticker) => ({
-    url: `https://내도메인.vercel.app/filings/${ticker}`,
+    url: `https://sec-tool-delta.vercel.app/filings/${ticker}`,
     lastModified: new Date(),
     changeFrequency: "daily",
     priority: 0.8,
@@ -11,7 +11,7 @@ export default async function sitemap() {
 
   return [
     {
-      url: "https://내도메인.vercel.app",
+      url: "https://sec-tool-delta.vercel.app/",
       lastModified: new Date(),
       changeFrequency: "always",
       priority: 1,
